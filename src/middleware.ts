@@ -1,9 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-// Next 16 renamed `middleware` → `proxy`. Refreshes the Supabase session on every
-// request and redirects unauthenticated users to /login.
-export async function proxy(request: NextRequest) {
+// Using middleware.ts (edge-compatible) instead of proxy.ts so Vercel's integration
+// populates middleware-manifest.json correctly. proxy.ts Node.js runtime is not yet
+// supported by Vercel's edge routing layer. Revisit when Vercel updates their adapter.
+export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
