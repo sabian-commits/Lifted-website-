@@ -179,3 +179,21 @@ export interface MultiplyRelationship {
   notes: string;
   createdAt: string;
 }
+
+// ---------- First Impressions: Guest Pipeline ----------
+// Tracks new people through R1 (Recognition) → R2 (Relationship) → R3 (Responsibility) → Connected
+export type RStage = "r1" | "r2" | "r3" | "completed";
+
+export interface Guest {
+  id: string;
+  loggedBy: string;
+  name: string;
+  firstVisitDate: string;       // "YYYY-MM-DD"
+  currentRStage: RStage;
+  connectCardDone: boolean;
+  lifeGroupConnected: boolean;
+  dnaStarted: boolean;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+}

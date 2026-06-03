@@ -6,9 +6,11 @@ import { canReport, useStore } from "@/lib/store";
 
 const NAV = [
   { href: "/dashboard", key: "nav.dashboard" },
+  { href: "/see", key: "nav.see" },
+  { href: "/grow", key: "nav.grow" },
+  { href: "/multiply", key: "nav.multiply" },
   { href: "/trainings", key: "nav.trainings" },
   { href: "/ladder", key: "nav.ladder" },
-  { href: "/multiply", key: "nav.multiply" },
   { href: "/coach", key: "nav.coach" },
   { href: "/events", key: "nav.events" },
   { href: "/report", key: "nav.report", reportOnly: true },

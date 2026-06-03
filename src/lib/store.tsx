@@ -20,12 +20,14 @@ import type {
   Escalation,
   EscalationResponse,
   EventRsvp,
+  Guest,
   InfoItem,
   MultiplyRelationship,
   MultiplyStatus,
   Recognition,
   River,
   Role,
+  RStage,
   StarAward,
   StarLevel,
   TrainingCompletion,
@@ -67,6 +69,7 @@ interface StoreValue {
   eventRsvps: EventRsvp[];
   infoItems: InfoItem[];
   multiplyRelationships: MultiplyRelationship[];
+  guests: Guest[];
   resolvedAwards: StarAward[];
 
   hasCompleted: (volunteerId: string, trainingId: TrainingId) => boolean;
@@ -88,6 +91,9 @@ interface StoreValue {
   addRelationship: (input: { discipleId: string; river: River; focus: string }) => Promise<void>;
   updateRelationship: (id: string, patch: { status?: MultiplyStatus; notes?: string }) => Promise<void>;
   removeRelationship: (id: string) => Promise<void>;
+  logGuest: (input: { name: string; firstVisitDate: string }) => Promise<void>;
+  updateGuestStage: (id: string, stage: RStage) => Promise<void>;
+  updateGuestMilestones: (id: string, patch: Partial<Pick<Guest, "connectCardDone" | "lifeGroupConnected" | "dnaStarted">>) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -188,6 +194,19 @@ const mapRelationship = (r: Row): MultiplyRelationship => ({
   notes: (r.notes as string) ?? "",
   createdAt: r.created_at as string,
 });
+const mapGuest = (r: Row): Guest => ({
+  id: r.id as string,
+  loggedBy: r.logged_by as string,
+  name: r.name as string,
+  firstVisitDate: r.first_visit_date as string,
+  currentRStage: r.current_r_stage as RStage,
+  connectCardDone: r.connect_card_done as boolean,
+  lifeGroupConnected: r.life_group_connected as boolean,
+  dnaStarted: r.dna_started as boolean,
+  notes: (r.notes as string) ?? "",
+  createdAt: r.created_at as string,
+  updatedAt: r.updated_at as string,
+});
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const { lang, setLang, t } = useLang();
@@ -206,6 +225,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [eventRsvps, setEventRsvps] = useState<EventRsvp[]>([]);
   const [infoItems, setInfoItems] = useState<InfoItem[]>([]);
   const [multiplyRelationships, setMultiplyRelationships] = useState<MultiplyRelationship[]>([]);
+  const [guests, setGuests] = useState<Guest[]>([]);
 
   const load = useCallback(async () => {
     const {
@@ -217,7 +237,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     // RLS scopes every query to what this user may see.
-    const [pf, profiles, comps, aw, recs, reps, wls, escs, evs, rsvps, infos, rels] = await Promise.all([
+    const [pf, profiles, comps, aw, recs, reps, wls, escs, evs, rsvps, infos, rels, gsts] = await Promise.all([
       supabase.from("profiles").select("*").eq("id", user.id).single(),
       supabase.from("profiles").select("*"),
       supabase.from("training_completions").select("*"),
@@ -230,6 +250,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       supabase.from("event_rsvps").select("*"),
       supabase.from("info_items").select("*").order("sort", { ascending: true }),
       supabase.from("multiply_relationships").select("*").order("created_at", { ascending: true }),
+      supabase.from("guests").select("*").order("created_at", { ascending: false }),
     ]);
     setViewer(pf.data ? mapProfile(pf.data) : null);
     setVolunteers((profiles.data ?? []).map(mapProfile));
@@ -243,6 +264,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setEventRsvps((rsvps.data ?? []).map(mapRsvp));
     setInfoItems((infos.data ?? []).map(mapInfo));
     setMultiplyRelationships((rels.data ?? []).map(mapRelationship));
+    setGuests((gsts.data ?? []).map(mapGuest));
     setLoading(false);
   }, [supabase]);
 
@@ -443,6 +465,34 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     await load();
   };
 
+  // ---------- Guest Pipeline ----------
+  const logGuest = async (input: { name: string; firstVisitDate: string }) => {
+    if (!viewer) return;
+    await supabase.from("guests").insert({
+      logged_by: viewer.id,
+      name: input.name.trim(),
+      first_visit_date: input.firstVisitDate,
+    });
+    await load();
+  };
+
+  const updateGuestStage = async (id: string, stage: RStage) => {
+    await supabase.from("guests").update({ current_r_stage: stage }).eq("id", id);
+    await load();
+  };
+
+  const updateGuestMilestones = async (
+    id: string,
+    patch: Partial<Pick<Guest, "connectCardDone" | "lifeGroupConnected" | "dnaStarted">>,
+  ) => {
+    const update: Record<string, unknown> = {};
+    if (patch.connectCardDone !== undefined) update.connect_card_done = patch.connectCardDone;
+    if (patch.lifeGroupConnected !== undefined) update.life_group_connected = patch.lifeGroupConnected;
+    if (patch.dnaStarted !== undefined) update.dna_started = patch.dnaStarted;
+    await supabase.from("guests").update(update).eq("id", id);
+    await load();
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     window.location.href = "/login";
@@ -465,6 +515,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     eventRsvps,
     infoItems,
     multiplyRelationships,
+    guests,
     resolvedAwards,
     hasCompleted,
     eligibility,
@@ -484,6 +535,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     addRelationship,
     updateRelationship,
     removeRelationship,
+    logGuest,
+    updateGuestStage,
+    updateGuestMilestones,
     signOut,
   };
 

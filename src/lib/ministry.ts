@@ -21,6 +21,20 @@ export const FIVE_INTO_ONE_CAP = 5;
 // as pending so the app does not invent rules the ministry has not decided.
 export const PENDING_MULTIPLY_ROLES = ["galvanizer", "enabler"] as const;
 
+// ---------- GROW stage config (playbook §4) ----------
+// The Growth Ladder — three rungs, directional (people move up). The "loop" is the
+// teaching method, not the ladder itself.
+export const GROWTH_LADDER: { id: string; nameKey: string; descKey: string }[] = [
+  { id: "dna", nameKey: "grow.rung.dna.name", descKey: "grow.rung.dna.desc" },
+  { id: "first_principles", nameKey: "grow.rung.fp.name", descKey: "grow.rung.fp.desc" },
+  { id: "small_groups", nameKey: "grow.rung.sg.name", descKey: "grow.rung.sg.desc" },
+];
+
+// Readiness markers (Become Ready) and outward signs (To Rescue) — the two
+// movements of "Ready to Rescue". Rendered as descriptive lists, not tracked data.
+export const READINESS_MARKERS = ["attendance", "dna", "smallgroup", "serving", "character"] as const;
+export const TO_RESCUE_SIGNS = ["mentor", "identify", "model"] as const;
+
 export const ZONES: Zone[] = [
   { id: "parking", nameKey: "zone.parking.name", descKey: "zone.parking.desc" },
   { id: "breezeway", nameKey: "zone.breezeway.name", descKey: "zone.breezeway.desc" },

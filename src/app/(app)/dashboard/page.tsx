@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useStore } from "@/lib/store";
-import { levelByStars, nextLevel } from "@/lib/ministry";
-import { trainingById } from "@/lib/ministry";
+import { levelByStars, nextLevel, trainingById } from "@/lib/ministry";
 import { PageHeader, StageChip, StemMeter, Stars } from "@/components/ui";
+import type { Stage } from "@/lib/types";
 
 export default function DashboardPage() {
   const {
@@ -33,9 +33,44 @@ export default function DashboardPage() {
   const nextTraining = next ? trainingById(next.requiredTraining) : undefined;
   const trainingDone = next ? hasCompleted(viewer.id, next.requiredTraining) : false;
 
+  const currentStage: Stage = currentLevel?.stage ?? "see";
+  const STAGES: Stage[] = ["see", "grow", "multiply"];
+
   return (
     <div className="flex flex-col gap-5">
       <PageHeader title={`${t("dash.hello")}, ${viewer.name.split(" ")[0]}`} />
+
+      {/* Pipeline strip: See → Grow → Multiply */}
+      <section className="card p-4">
+        <p className="text-xs uppercase tracking-wider font-semibold mb-3" style={{ color: "var(--muted)" }}>
+          {t("dash.pipeline.title")}
+        </p>
+        <div className="flex items-center gap-2">
+          {STAGES.map((s, i) => {
+            const active = s === currentStage;
+            const past = STAGES.indexOf(s) < STAGES.indexOf(currentStage);
+            return (
+              <span key={s} className="flex items-center gap-2">
+                <span
+                  className="chip"
+                  style={
+                    active
+                      ? { background: "var(--green-100)", color: "var(--green-900)", fontWeight: 700 }
+                      : past
+                      ? { background: "var(--green-50, var(--surface-2))", color: "var(--green-600, var(--muted))" }
+                      : { color: "var(--muted)", background: "var(--surface-2)" }
+                  }
+                >
+                  {t(`common.${s}`)}
+                </span>
+                {i < STAGES.length - 1 && (
+                  <span style={{ color: "var(--muted)", fontSize: "0.75rem" }}>→</span>
+                )}
+              </span>
+            );
+          })}
+        </div>
+      </section>
 
       {/* Current standing */}
       <section className="card p-5">

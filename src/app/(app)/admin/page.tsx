@@ -5,9 +5,9 @@ import { useStore } from "@/lib/store";
 import { ZONES, levelByStars } from "@/lib/ministry";
 import { windowRemaining } from "@/lib/approval-engine";
 import { PageHeader, StageChip, Stars } from "@/components/ui";
-import type { EscalationResponse, ZoneId } from "@/lib/types";
+import type { EscalationResponse, Guest, RStage, ZoneId } from "@/lib/types";
 
-type Tab = "approvals" | "roster" | "recognition" | "reports" | "escalations" | "metrics";
+type Tab = "approvals" | "roster" | "recognition" | "reports" | "escalations" | "metrics" | "people";
 
 export default function AdminPage() {
   const {
@@ -19,10 +19,12 @@ export default function AdminPage() {
     reports,
     weakLinks,
     escalations,
+    guests,
     decideAward,
     confirmRecognition,
     addEscalation,
     resolveWeakLink,
+    updateGuestStage,
   } = useStore();
   const [tab, setTab] = useState<Tab>("approvals");
   const [convo, setConvo] = useState<Record<string, boolean>>({});
@@ -59,6 +61,7 @@ export default function AdminPage() {
   const tabs: { id: Tab; key: string }[] = [
     { id: "approvals", key: "admin.tab.approvals" },
     { id: "roster", key: "admin.tab.roster" },
+    { id: "people", key: "admin.tab.people" },
     { id: "recognition", key: "admin.tab.recognition" },
     { id: "reports", key: "admin.tab.reports" },
     { id: "escalations", key: "admin.tab.escalations" },
@@ -248,6 +251,16 @@ export default function AdminPage() {
         </section>
       )}
 
+      {/* PEOPLE — Guest pipeline */}
+      {tab === "people" && (
+        <PeopleTab
+          t={t}
+          guests={guests}
+          nameOf={nameOf}
+          onAdvance={(id, stage) => updateGuestStage(id, stage)}
+        />
+      )}
+
       {/* ESCALATIONS — Form C / 3-response framework */}
       {tab === "escalations" && (
         <EscalationsTab
@@ -312,6 +325,129 @@ export default function AdminPage() {
         </section>
       )}
     </div>
+  );
+}
+
+function PeopleTab({
+  t,
+  guests,
+  nameOf,
+  onAdvance,
+}: {
+  t: (k: string) => string;
+  guests: Guest[];
+  nameOf: (id: string) => string;
+  onAdvance: (id: string, stage: RStage) => void;
+}) {
+  const thisMonth = new Date().toISOString().slice(0, 7);
+  const monthGuests = guests.filter((g) => g.firstVisitDate.slice(0, 7) === thisMonth);
+
+  const totalLogged = guests.length;
+  const atR2plus = guests.filter((g) => ["r2", "r3", "completed"].includes(g.currentRStage)).length;
+  const atR3plus = guests.filter((g) => ["r3", "completed"].includes(g.currentRStage)).length;
+  const connected = guests.filter((g) => g.currentRStage === "completed").length;
+
+  const NEXT_STAGE: Record<string, RStage> = { r1: "r2", r2: "r3", r3: "completed" };
+  const STAGE_GROUPS: RStage[] = ["r1", "r2", "r3", "completed"];
+
+  return (
+    <section className="flex flex-col gap-4">
+      <h2 className="font-bold" style={{ color: "var(--green-900)" }}>{t("admin.people.title")}</h2>
+
+      {/* Monthly stats */}
+      <div className="card p-4">
+        <div className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--muted)" }}>
+          {t("admin.people.thisMonth.title")}
+        </div>
+        <div className="grid grid-cols-3 gap-3 text-center">
+          <div>
+            <div className="text-xl font-bold" style={{ color: "var(--green-900)" }}>
+              {monthGuests.filter((g) => g.connectCardDone).length}
+            </div>
+            <div className="text-xs" style={{ color: "var(--muted)" }}>{t("admin.people.thisMonth.cards")}</div>
+          </div>
+          <div>
+            <div className="text-xl font-bold" style={{ color: "var(--green-900)" }}>
+              {monthGuests.filter((g) => g.lifeGroupConnected).length}
+            </div>
+            <div className="text-xs" style={{ color: "var(--muted)" }}>{t("admin.people.thisMonth.groups")}</div>
+          </div>
+          <div>
+            <div className="text-xl font-bold" style={{ color: "var(--green-900)" }}>
+              {monthGuests.filter((g) => g.dnaStarted).length}
+            </div>
+            <div className="text-xs" style={{ color: "var(--muted)" }}>{t("admin.people.thisMonth.dna")}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Pipeline funnel */}
+      <div className="card p-4">
+        <div className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--muted)" }}>
+          {t("admin.people.funnel.title")}
+        </div>
+        <div className="grid grid-cols-4 gap-2 text-center text-sm">
+          {[
+            { key: "r1", value: totalLogged },
+            { key: "r2", value: atR2plus },
+            { key: "r3", value: atR3plus },
+            { key: "dna", value: connected },
+          ].map(({ key, value }) => (
+            <div key={key}>
+              <div className="text-xl font-bold" style={{ color: "var(--green-900)" }}>{value}</div>
+              <div className="text-xs" style={{ color: "var(--muted)" }}>{t(`admin.people.funnel.${key}`)}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Grouped list by stage */}
+      {guests.length === 0 ? (
+        <p className="text-sm" style={{ color: "var(--muted)" }}>{t("admin.people.none")}</p>
+      ) : (
+        STAGE_GROUPS.map((stage) => {
+          const group = guests.filter((g) => g.currentRStage === stage);
+          if (group.length === 0) return null;
+          return (
+            <div key={stage} className="flex flex-col gap-2">
+              <div className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--muted)" }}>
+                {stage === "completed" ? t("see.guests.stage.completed") : stage.toUpperCase()}
+              </div>
+              {group.map((g) => {
+                const visitDate = new Date(g.firstVisitDate + "T00:00:00").toLocaleDateString();
+                const isCompleted = g.currentRStage === "completed";
+                const nextStage = isCompleted ? null : NEXT_STAGE[g.currentRStage];
+                return (
+                  <div key={g.id} className="card p-4 text-sm">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <span className="font-semibold" style={{ color: "var(--green-900)" }}>{g.name}</span>
+                      <div className="flex items-center gap-2 text-xs" style={{ color: "var(--muted)" }}>
+                        {g.connectCardDone && <span className="chip chip-gold">Card</span>}
+                        {g.lifeGroupConnected && <span className="chip chip-gold">Group</span>}
+                        {g.dnaStarted && <span className="chip chip-gold">DNA</span>}
+                      </div>
+                    </div>
+                    <div className="mt-1 flex gap-4 text-xs" style={{ color: "var(--muted)" }}>
+                      <span>{t("admin.people.loggedBy")}: {nameOf(g.loggedBy)}</span>
+                      <span>{t("admin.people.firstVisit")}: {visitDate}</span>
+                    </div>
+                    {!isCompleted && nextStage && (
+                      <button
+                        className="btn btn-ghost mt-2"
+                        style={{ padding: "0.3rem 0.7rem", fontSize: "0.78rem" }}
+                        onClick={() => onAdvance(g.id, nextStage)}
+                      >
+                        Advance to {nextStage.toUpperCase()} →
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })
+      )}
+    </section>
   );
 }
 
