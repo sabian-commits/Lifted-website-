@@ -95,7 +95,7 @@ interface StoreValue {
   logGuest: (input: { name: string; firstVisitDate: string }) => Promise<void>;
   updateGuestStage: (id: string, stage: RStage) => Promise<void>;
   updateGuestMilestones: (id: string, patch: Partial<Pick<Guest, "connectCardDone" | "lifeGroupConnected" | "dnaStarted">>) => Promise<void>;
-  updateVolunteer: (id: string, patch: { name?: string; zone?: ZoneId | null; role?: Role }) => Promise<void>;
+  updateVolunteer: (id: string, patch: { name?: string; zone?: ZoneId | null; role?: Role; languagePref?: "en" | "es" }) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -499,12 +499,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     await load();
   };
 
-  const updateVolunteer = async (id: string, patch: { name?: string; zone?: ZoneId | null; role?: Role }) => {
+  const updateVolunteer = async (id: string, patch: { name?: string; zone?: ZoneId | null; role?: Role; languagePref?: "en" | "es" }) => {
     const update: Record<string, unknown> = {};
     if (patch.name !== undefined) update.name = patch.name.trim();
     if ("zone" in patch) update.zone = patch.zone ?? null;
     if (patch.role !== undefined) update.role = patch.role;
+    if (patch.languagePref !== undefined) update.language_pref = patch.languagePref;
     await supabase.from("profiles").update(update).eq("id", id);
+    if (patch.languagePref !== undefined) setLang(patch.languagePref);
     await load();
   };
 

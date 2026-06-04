@@ -17,8 +17,9 @@ const NAV: { href: string; key: string; minStage?: Stage; reportOnly?: boolean; 
   { href: "/ladder",    key: "nav.ladder",   minStage: "multiply" },
   { href: "/coach",     key: "nav.coach" },
   { href: "/events",    key: "nav.events" },
-  { href: "/report",    key: "nav.report", reportOnly: true },
-  { href: "/admin",     key: "nav.admin",  leadOnly: true },
+  { href: "/report",    key: "nav.report",  reportOnly: true },
+  { href: "/admin",     key: "nav.admin",   leadOnly: true },
+  { href: "/profile",   key: "nav.profile" },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
