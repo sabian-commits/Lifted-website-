@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import { StoreProvider, useStore } from "@/lib/store";
 import { AppShell } from "@/components/AppShell";
 
