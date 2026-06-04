@@ -94,6 +94,7 @@ interface StoreValue {
   logGuest: (input: { name: string; firstVisitDate: string }) => Promise<void>;
   updateGuestStage: (id: string, stage: RStage) => Promise<void>;
   updateGuestMilestones: (id: string, patch: Partial<Pick<Guest, "connectCardDone" | "lifeGroupConnected" | "dnaStarted">>) => Promise<void>;
+  updateVolunteer: (id: string, patch: { name?: string; zone?: ZoneId | null; role?: Role }) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -493,6 +494,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     await load();
   };
 
+  const updateVolunteer = async (id: string, patch: { name?: string; zone?: ZoneId | null; role?: Role }) => {
+    const update: Record<string, unknown> = {};
+    if (patch.name !== undefined) update.name = patch.name.trim();
+    if ("zone" in patch) update.zone = patch.zone ?? null;
+    if (patch.role !== undefined) update.role = patch.role;
+    await supabase.from("profiles").update(update).eq("id", id);
+    await load();
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     window.location.href = "/login";
@@ -538,6 +548,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     logGuest,
     updateGuestStage,
     updateGuestMilestones,
+    updateVolunteer,
     signOut,
   };
 

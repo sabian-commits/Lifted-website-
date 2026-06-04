@@ -2,19 +2,23 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { levelByStars } from "@/lib/ministry";
 import { canReport, useStore } from "@/lib/store";
 
-const NAV = [
+type Stage = "see" | "grow" | "multiply";
+const STAGE_RANK: Record<Stage, number> = { see: 0, grow: 1, multiply: 2 };
+
+const NAV: { href: string; key: string; minStage?: Stage; reportOnly?: boolean; leadOnly?: boolean }[] = [
   { href: "/dashboard", key: "nav.dashboard" },
-  { href: "/see", key: "nav.see" },
-  { href: "/grow", key: "nav.grow" },
-  { href: "/multiply", key: "nav.multiply" },
+  { href: "/see",       key: "nav.see" },
+  { href: "/grow",      key: "nav.grow",     minStage: "grow" },
+  { href: "/multiply",  key: "nav.multiply", minStage: "multiply" },
   { href: "/trainings", key: "nav.trainings" },
-  { href: "/ladder", key: "nav.ladder" },
-  { href: "/coach", key: "nav.coach" },
-  { href: "/events", key: "nav.events" },
-  { href: "/report", key: "nav.report", reportOnly: true },
-  { href: "/admin", key: "nav.admin", leadOnly: true },
+  { href: "/ladder",    key: "nav.ladder",   minStage: "multiply" },
+  { href: "/coach",     key: "nav.coach" },
+  { href: "/events",    key: "nav.events" },
+  { href: "/report",    key: "nav.report", reportOnly: true },
+  { href: "/admin",     key: "nav.admin",  leadOnly: true },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -25,8 +29,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const isLead = viewer.role === "ministry_lead" || viewer.role === "pastor";
   const canRep = canReport(viewer.role);
-  const visible = (n: { leadOnly?: boolean; reportOnly?: boolean }) =>
-    (!n.leadOnly || isLead) && (!n.reportOnly || canRep);
+  const currentStage: Stage = (levelByStars(viewer.currentStars)?.stage as Stage) ?? "see";
+  const visible = (n: typeof NAV[number]) =>
+    (!n.leadOnly   || isLead) &&
+    (!n.reportOnly || canRep) &&
+    (!n.minStage   || isLead || STAGE_RANK[currentStage] >= STAGE_RANK[n.minStage]);
 
   return (
     <div className="flex flex-col min-h-full">

@@ -5,7 +5,7 @@ import { useStore } from "@/lib/store";
 import { ZONES, levelByStars } from "@/lib/ministry";
 import { windowRemaining } from "@/lib/approval-engine";
 import { PageHeader, StageChip, Stars } from "@/components/ui";
-import type { EscalationResponse, Guest, RStage, ZoneId } from "@/lib/types";
+import type { EscalationResponse, Guest, Role, RStage, Volunteer, ZoneId } from "@/lib/types";
 
 type Tab = "approvals" | "roster" | "recognition" | "reports" | "escalations" | "metrics" | "people";
 
@@ -25,10 +25,56 @@ export default function AdminPage() {
     addEscalation,
     resolveWeakLink,
     updateGuestStage,
+    updateVolunteer,
   } = useStore();
   const [tab, setTab] = useState<Tab>("approvals");
   const [convo, setConvo] = useState<Record<string, boolean>>({});
   const [error, setError] = useState<string>("");
+
+  // Volunteer invite / edit modal
+  type ModalMode = "invite" | "edit";
+  const [modalMode, setModalMode] = useState<ModalMode | null>(null);
+  const [editTarget, setEditTarget] = useState<Volunteer | null>(null);
+  const [form, setForm] = useState({ name: "", email: "", zone: "" as ZoneId | "", role: "volunteer" as Role });
+  const [modalBusy, setModalBusy] = useState(false);
+  const [modalMsg, setModalMsg] = useState("");
+  const [modalError, setModalError] = useState("");
+
+  const openInvite = () => {
+    setForm({ name: "", email: "", zone: "", role: "volunteer" });
+    setModalMsg(""); setModalError(""); setModalBusy(false);
+    setEditTarget(null); setModalMode("invite");
+  };
+  const openEdit = (v: Volunteer) => {
+    setForm({ name: v.name, email: "", zone: v.zone ?? "", role: v.role });
+    setModalMsg(""); setModalError(""); setModalBusy(false);
+    setEditTarget(v); setModalMode("edit");
+  };
+  const closeModal = () => { setModalMode(null); setEditTarget(null); };
+
+  const handleInvite = async () => {
+    if (!form.name || !form.email) { setModalError(t("common.required")); return; }
+    setModalBusy(true); setModalError("");
+    try {
+      const res = await fetch("/api/admin/invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: form.name, email: form.email, zone: form.zone || null, role: form.role }),
+      });
+      const json = await res.json();
+      if (!res.ok) { setModalError(json.error ?? "Error"); }
+      else { setModalMsg(t("admin.roster.inviteSent")); }
+    } catch { setModalError("Network error"); }
+    setModalBusy(false);
+  };
+
+  const handleEdit = async () => {
+    if (!editTarget || !form.name) { setModalError(t("common.required")); return; }
+    setModalBusy(true); setModalError("");
+    await updateVolunteer(editTarget.id, { name: form.name, zone: (form.zone as ZoneId) || null, role: form.role });
+    setModalMsg(t("admin.roster.saved"));
+    setModalBusy(false);
+  };
 
   const isLead = !!viewer && (viewer.role === "ministry_lead" || viewer.role === "pastor");
   const now = new Date().toISOString();
@@ -163,7 +209,12 @@ export default function AdminPage() {
       {/* ROSTER */}
       {tab === "roster" && (
         <section className="flex flex-col gap-4">
-          <h2 className="font-bold" style={{ color: "var(--green-900)" }}>{t("admin.roster.title")}</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="font-bold" style={{ color: "var(--green-900)" }}>{t("admin.roster.title")}</h2>
+            <button className="btn btn-primary" style={{ fontSize: "0.82rem", padding: "0.35rem 0.9rem" }} onClick={openInvite}>
+              + {t("admin.roster.invite")}
+            </button>
+          </div>
           {([...ZONES.map((z) => z.id), null] as (ZoneId | null)[]).map((zoneId) => {
             const members = volunteers.filter((v) => v.zone === zoneId);
             if (members.length === 0) return null;
@@ -182,8 +233,15 @@ export default function AdminPage() {
                           {v.currentStars > 0 && <Stars n={v.currentStars} />}
                           {lvl && <StageChip stage={lvl.stage} />}
                           <span style={{ color: "var(--muted)" }} className="text-xs">
-                            {v.role.replace("_", " ")}
+                            {v.role.replace(/_/g, " ")}
                           </span>
+                          <button
+                            className="btn btn-ghost"
+                            style={{ padding: "0.2rem 0.55rem", fontSize: "0.75rem" }}
+                            onClick={() => openEdit(v)}
+                          >
+                            {t("admin.roster.edit")}
+                          </button>
                         </span>
                       </li>
                     );
@@ -323,6 +381,99 @@ export default function AdminPage() {
           </div>
           <p className="text-xs italic" style={{ color: "var(--muted)" }}>{t("admin.metrics.note")}</p>
         </section>
+      )}
+
+      {/* Invite / Edit modal */}
+      {modalMode && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.4)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }}
+        >
+          <div className="card p-6 w-full max-w-md flex flex-col gap-4" style={{ background: "var(--surface)" }}>
+            <h3 className="font-bold text-lg" style={{ color: "var(--green-900)" }}>
+              {modalMode === "invite" ? t("admin.roster.inviteTitle") : t("admin.roster.editTitle")}
+            </h3>
+
+            <label className="flex flex-col gap-1">
+              <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>
+                {t("admin.roster.nameLabel")}
+              </span>
+              <input
+                value={form.name}
+                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                placeholder="Ana Torres"
+                style={{ border: "1px solid var(--border)", borderRadius: 8, padding: "0.45rem 0.7rem", fontSize: "0.9rem" }}
+              />
+            </label>
+
+            {modalMode === "invite" && (
+              <label className="flex flex-col gap-1">
+                <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>
+                  {t("admin.roster.emailLabel")}
+                </span>
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                  placeholder="ana@example.com"
+                  style={{ border: "1px solid var(--border)", borderRadius: 8, padding: "0.45rem 0.7rem", fontSize: "0.9rem" }}
+                />
+              </label>
+            )}
+
+            <div className="grid grid-cols-2 gap-3">
+              <label className="flex flex-col gap-1">
+                <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>
+                  {t("admin.roster.zoneLabel")}
+                </span>
+                <select
+                  value={form.zone}
+                  onChange={(e) => setForm((f) => ({ ...f, zone: e.target.value as ZoneId | "" }))}
+                  style={{ border: "1px solid var(--border)", borderRadius: 8, padding: "0.45rem 0.7rem", fontSize: "0.9rem" }}
+                >
+                  <option value="">{t("admin.roster.noZoneOption")}</option>
+                  {ZONES.map((z) => <option key={z.id} value={z.id}>{t(z.nameKey)}</option>)}
+                </select>
+              </label>
+
+              <label className="flex flex-col gap-1">
+                <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--muted)" }}>
+                  {t("admin.roster.roleLabel")}
+                </span>
+                <select
+                  value={form.role}
+                  onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as Role }))}
+                  style={{ border: "1px solid var(--border)", borderRadius: 8, padding: "0.45rem 0.7rem", fontSize: "0.9rem" }}
+                >
+                  {(["volunteer","gap_leader","area_lead","service_lead","ministry_lead","pastor"] as Role[]).map((r) => (
+                    <option key={r} value={r}>{r.replace(/_/g, " ")}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            {modalError && (
+              <p className="text-sm" style={{ color: "#9b2226" }}>{modalError}</p>
+            )}
+            {modalMsg && (
+              <p className="text-sm font-medium" style={{ color: "var(--green-700)" }}>{modalMsg}</p>
+            )}
+
+            <div className="flex gap-2 justify-end mt-1">
+              <button className="btn btn-ghost" onClick={closeModal}>{t("common.cancel")}</button>
+              {!modalMsg && (
+                <button
+                  className="btn btn-primary"
+                  disabled={modalBusy}
+                  onClick={modalMode === "invite" ? handleInvite : handleEdit}
+                >
+                  {modalBusy ? "…" : modalMode === "invite" ? t("admin.roster.invite") : t("admin.roster.save")}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
