@@ -536,7 +536,8 @@ const en: Record<string, string> = {
   "events.info.itemTitle": "Title (e.g. Sunday Services)",
   "events.info.body": "Details",
 
-  // Auth
+  // Auth / Gate
+  "gate.noProfile": "Your account is set up but your volunteer profile isn't ready yet. Please contact your Ministry Lead to complete setup.",
   "auth.signIn": "Sign in",
   "auth.signOut": "Sign out",
   "auth.email": "Email",

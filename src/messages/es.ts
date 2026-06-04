@@ -524,6 +524,7 @@ const es: Record<string, string> = {
   "events.info.itemTitle": "Título (ej. Servicios del domingo)",
   "events.info.body": "Detalles",
 
+  "gate.noProfile": "Tu cuenta está creada pero tu perfil de voluntario aún no está listo. Comunícate con tu líder de ministerio para completar la configuración.",
   "auth.signIn": "Iniciar sesión",
   "auth.signOut": "Cerrar sesión",
   "auth.email": "Correo",

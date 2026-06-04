@@ -57,6 +57,7 @@ interface StoreValue {
 
   loading: boolean;
   viewer: Volunteer | null;
+  profileMissing: boolean;
 
   volunteers: Volunteer[];
   completions: TrainingCompletion[];
@@ -215,6 +216,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const [loading, setLoading] = useState(true);
   const [viewer, setViewer] = useState<Volunteer | null>(null);
+  const [profileMissing, setProfileMissing] = useState(false);
   const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
   const [completions, setCompletions] = useState<TrainingCompletion[]>([]);
   const [awards, setAwards] = useState<StarAward[]>([]);
@@ -253,7 +255,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       supabase.from("multiply_relationships").select("*").order("created_at", { ascending: true }),
       supabase.from("guests").select("*").order("created_at", { ascending: false }),
     ]);
-    setViewer(pf.data ? mapProfile(pf.data) : null);
+    const mappedViewer = pf.data ? mapProfile(pf.data) : null;
+    setViewer(mappedViewer);
+    // user is authenticated (user != null) but has no profile row — orphaned account
+    setProfileMissing(!!user && !mappedViewer);
     setVolunteers((profiles.data ?? []).map(mapProfile));
     setCompletions((comps.data ?? []).map(mapCompletion));
     setAwards((aw.data ?? []).map(mapAward));
@@ -514,6 +519,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     t,
     loading,
     viewer,
+    profileMissing,
     volunteers,
     completions,
     awards,
