@@ -9,6 +9,7 @@ type Stage = "see" | "grow" | "multiply";
 const STAGE_RANK: Record<Stage, number> = { see: 0, grow: 1, multiply: 2 };
 
 const NAV: { href: string; key: string; minStage?: Stage; reportOnly?: boolean; leadOnly?: boolean }[] = [
+  { href: "/",          key: "nav.home" },
   { href: "/dashboard", key: "nav.dashboard" },
   { href: "/see",       key: "nav.see" },
   { href: "/grow",      key: "nav.grow",     minStage: "grow" },

@@ -558,6 +558,22 @@ const en: Record<string, string> = {
   "auth.magicSent": "Check your email for a sign-in link.",
   "auth.usePassword": "Use a password instead",
   "auth.useMagic": "Email me a link instead",
+
+  // Landing page — two-path experience
+  "landing.path.new": "New to Lifted?",
+  "landing.path.new.desc": "Just starting your journey with Lifted Church? We'd love to walk with you.",
+  "landing.path.new.cta": "Start Here",
+  "landing.path.volunteer": "I'm a Volunteer",
+  "landing.path.volunteer.desc": "Sign in to access your serving tools and track your journey.",
+  "landing.path.volunteer.cta": "Sign In",
+  "landing.loggedIn.greeting": "Welcome back",
+  "landing.loggedIn.path.new.desc": "Begin your growth journey — DNA, community, and next steps.",
+  "landing.loggedIn.path.new.cta": "Go to Grow",
+  "landing.loggedIn.path.volunteer.desc": "Jump into your First Impressions serving tools.",
+  "landing.loggedIn.path.volunteer.cta": "Go to See",
+  "landing.loggedIn.jumpBack": "Jump back in",
+  "landing.what.title": "What is First Impressions?",
+  "landing.what.body": "First Impressions is how Lifted Church welcomes every person who walks through the door. We train volunteers to make people feel seen, valued, and at home — from the parking lot to the seats. This app is your home base for training, growth, and serving.",
 };
 
 export default en;
