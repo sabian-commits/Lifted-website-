@@ -546,6 +546,17 @@ const es: Record<string, string> = {
   "auth.usePassword": "Usar contraseña",
   "auth.useMagic": "Enviarme un enlace",
 
+  // /connect — página pública para nuevos
+  "connect.title": "Conectándote en Lifted",
+  "connect.subtitle": "Así puedes dar tu próximo paso.",
+  "connect.pathway.title": "Tu camino",
+  "connect.pathway.steps": "Primera visita → Tarjeta de conexión → Grupo de Vida → DNA",
+  "connect.dna.title": "¿Qué es DNA?",
+  "connect.dna.body": "DNA es el primer paso real para conectarte y crecer en Lifted — es el discipulado fundamental que toda persona atraviesa. Es la base. Si te preguntas «¿qué sigue?», DNA casi siempre es la respuesta.",
+  "connect.lifeGroup.title": "¿Qué es un Grupo de Vida?",
+  "connect.lifeGroup.body": "Los Grupos de Vida son grupos pequeños donde ocurre la comunidad real. Responsabilidad relacional, aplicación y pertenencia — donde lo que aprendes se convierte en algo que vives.",
+  "connect.volunteer.cta": "¿Ya eres voluntario? Inicia sesión →",
+
   // Página de inicio — experiencia de dos caminos
   "landing.path.new": "¿Nuevo en Lifted?",
   "landing.path.new.desc": "¿Comenzando tu camino en Lifted Church? Nos encantaría acompañarte.",
@@ -554,8 +565,7 @@ const es: Record<string, string> = {
   "landing.path.volunteer.desc": "Inicia sesión para acceder a tus herramientas de servicio y seguir tu camino.",
   "landing.path.volunteer.cta": "Iniciar sesión",
   "landing.loggedIn.greeting": "Bienvenido de nuevo",
-  "landing.loggedIn.path.new.desc": "Comienza tu camino de crecimiento — DNA, comunidad y próximos pasos.",
-  "landing.loggedIn.path.new.cta": "Ir a Crecer",
+  "landing.loggedIn.path.volunteer": "¿Listo para servir?",
   "landing.loggedIn.path.volunteer.desc": "Entra a tus herramientas de servicio de Primeras Impresiones.",
   "landing.loggedIn.path.volunteer.cta": "Ir a Ver",
   "landing.loggedIn.jumpBack": "Volver a entrar",

@@ -117,66 +117,90 @@ export default function HomeClient({ isLoggedIn, userName }: Props) {
           </p>
         </section>
 
-        {/* Two-path cards */}
-        <section className="grid sm:grid-cols-2 gap-5">
-          {/* New to Lifted */}
-          <div
-            className="card p-6 flex flex-col gap-4"
-            style={{ borderTop: "4px solid var(--green-500)" }}
-          >
-            <div>
-              <h2 className="font-bold text-xl" style={{ color: "var(--green-900)" }}>
-                {t("landing.path.new")}
-              </h2>
-              <p className="text-sm mt-1.5 leading-relaxed" style={{ color: "var(--muted)" }}>
-                {isLoggedIn
-                  ? t("landing.loggedIn.path.new.desc")
-                  : t("landing.path.new.desc")}
-              </p>
-            </div>
-            <Link
-              href={isLoggedIn ? "/grow" : "/login"}
-              className="btn btn-primary self-start mt-auto"
-              style={{ padding: "0.55rem 1.2rem" }}
+        {/* Path cards */}
+        {!isLoggedIn ? (
+          <section className="grid sm:grid-cols-2 gap-5">
+            {/* New to Lifted — logged out */}
+            <div
+              className="card p-6 flex flex-col gap-4"
+              style={{ borderTop: "4px solid var(--green-500)" }}
             >
-              {isLoggedIn
-                ? t("landing.loggedIn.path.new.cta")
-                : t("landing.path.new.cta")}
-            </Link>
-          </div>
+              <div>
+                <h2 className="font-bold text-xl" style={{ color: "var(--green-900)" }}>
+                  {t("landing.path.new")}
+                </h2>
+                <p className="text-sm mt-1.5 leading-relaxed" style={{ color: "var(--muted)" }}>
+                  {t("landing.path.new.desc")}
+                </p>
+              </div>
+              <Link
+                href="/connect"
+                className="btn btn-primary self-start mt-auto"
+                style={{ padding: "0.55rem 1.2rem" }}
+              >
+                {t("landing.path.new.cta")}
+              </Link>
+            </div>
 
-          {/* Volunteer */}
-          <div
-            className="card p-6 flex flex-col gap-4"
-            style={{ borderTop: "4px solid var(--gold-600)" }}
-          >
-            <div>
-              <h2 className="font-bold text-xl" style={{ color: "var(--green-900)" }}>
-                {isLoggedIn ? t("nav.see") : t("landing.path.volunteer")}
-              </h2>
-              <p className="text-sm mt-1.5 leading-relaxed" style={{ color: "var(--muted)" }}>
-                {isLoggedIn
-                  ? t("landing.loggedIn.path.volunteer.desc")
-                  : t("landing.path.volunteer.desc")}
-              </p>
-            </div>
-            <Link
-              href={isLoggedIn ? "/see" : "/login"}
-              className="btn self-start mt-auto"
-              style={{
-                padding: "0.55rem 1.2rem",
-                background: "var(--gold-100, #fef9e7)",
-                color: "var(--gold-600)",
-                border: "1.5px solid var(--gold-600)",
-                fontWeight: 600,
-              }}
+            {/* Volunteer — logged out */}
+            <div
+              className="card p-6 flex flex-col gap-4"
+              style={{ borderTop: "4px solid var(--gold-600)" }}
             >
-              {isLoggedIn
-                ? t("landing.loggedIn.path.volunteer.cta")
-                : t("landing.path.volunteer.cta")}
-            </Link>
-          </div>
-        </section>
+              <div>
+                <h2 className="font-bold text-xl" style={{ color: "var(--green-900)" }}>
+                  {t("landing.path.volunteer")}
+                </h2>
+                <p className="text-sm mt-1.5 leading-relaxed" style={{ color: "var(--muted)" }}>
+                  {t("landing.path.volunteer.desc")}
+                </p>
+              </div>
+              <Link
+                href="/login"
+                className="btn self-start mt-auto"
+                style={{
+                  padding: "0.55rem 1.2rem",
+                  background: "var(--gold-100, #fef9e7)",
+                  color: "var(--gold-600)",
+                  border: "1.5px solid var(--gold-600)",
+                  fontWeight: 600,
+                }}
+              >
+                {t("landing.path.volunteer.cta")}
+              </Link>
+            </div>
+          </section>
+        ) : (
+          <section className="max-w-lg">
+            {/* Volunteer — logged in */}
+            <div
+              className="card p-6 flex flex-col gap-4"
+              style={{ borderTop: "4px solid var(--gold-600)" }}
+            >
+              <div>
+                <h2 className="font-bold text-xl" style={{ color: "var(--green-900)" }}>
+                  {t("landing.loggedIn.path.volunteer")}
+                </h2>
+                <p className="text-sm mt-1.5 leading-relaxed" style={{ color: "var(--muted)" }}>
+                  {t("landing.loggedIn.path.volunteer.desc")}
+                </p>
+              </div>
+              <Link
+                href="/see"
+                className="btn self-start mt-auto"
+                style={{
+                  padding: "0.55rem 1.2rem",
+                  background: "var(--gold-100, #fef9e7)",
+                  color: "var(--gold-600)",
+                  border: "1.5px solid var(--gold-600)",
+                  fontWeight: 600,
+                }}
+              >
+                {t("landing.loggedIn.path.volunteer.cta")}
+              </Link>
+            </div>
+          </section>
+        )}
 
         {/* Jump back in (logged-in only) */}
         {isLoggedIn && (

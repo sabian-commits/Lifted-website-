@@ -36,6 +36,7 @@ export async function middleware(request: NextRequest) {
   const isPublic =
     path === "/" ||
     path === "/login" ||
+    path === "/connect" ||
     path.startsWith("/auth") ||
     path === "/manifest.webmanifest";
 
